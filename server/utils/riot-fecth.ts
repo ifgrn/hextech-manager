@@ -1,7 +1,7 @@
-const BASE_URL = "https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id";
+import { url_consts } from "./consts";
 
 export const get_puuid = async (gameName: string, tagLine: string) => {
-  const url = `${BASE_URL}/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
+  const url = `${url_consts.puuid_url}/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
 
   try {
     const res = await fetch(url, {
