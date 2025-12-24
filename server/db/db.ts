@@ -32,8 +32,7 @@ function initalizeDatabase(): void {
       server text not null,
       is_active boolean default 1,
       created_at timestamp default current_timestamp,
-      updated_at timestamp default current_timestamp,
-      foreign key (owner_id) references users(id)
+      updated_at timestamp default current_timestamp
     )`);
   } catch (e) {
     console.error("❌ Error inicializando la base de datos:", e);
