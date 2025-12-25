@@ -7,3 +7,10 @@ export const hash_password = async (password: string) => {
 
   return password_hashed;
 };
+
+export const verify_password = async (
+  password: string,
+  hashedPass: string,
+): Promise<boolean> => {
+  return Bun.password.verify(password, hashedPass);
+};

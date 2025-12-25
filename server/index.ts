@@ -2,9 +2,12 @@ import { Hono } from "hono";
 
 import users from "./routes/user-routes";
 import accounts from "./routes/accounts-routes";
+import { logger } from "hono/logger";
 
 const port = process.env.PORT;
 const app = new Hono();
+
+app.use(logger());
 
 app.use("/", async (c) => c.text("Hola"));
 app.route("/api/v1/users", users);
