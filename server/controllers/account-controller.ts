@@ -27,34 +27,45 @@ export const addAccount = async (c: Context) => {
 
 export const getAllActiveAcounts = (c: Context) => {
   try {
-    const stmt = db.prepare(`SELECT * FROM lol_accounts WHERE is_active="1"`);
+    const stmt = db.prepare(
+      `SELECT * FROM lol_accounts WHERE is_active=1
+      ORDER BY updated_at DESC`,
+    );
     const accounts = stmt.all();
     return c.json({ success: true, data: accounts });
   } catch (error) {
     console.error(error);
+    throw error;
   }
 };
 
 export const deleteAccountByID = (c: Context) => {
   const id = Number(c.req.param("id"));
 
-  const account: Account | undefined = allAcounts.find((acc) => acc.id === id);
-  if (!account) {
-    return c.json({ message: "Cuenta no encontrada" }, 404);
+  try {
+    const stmt = db.prepare(`UPDATE lol_accounts
+      SET is_active= 0 WHERE id=?
+      RETURNING id, gameName, tagLine, is_active`);
+
+    const accountdisabled = stmt.get(id);
+    return c.json({ success: true, data: accountdisabled });
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-
-  account.active = false;
-
-  return c.json(account);
 };
 
 export const updateAccountByID = async (c: Context) => {
   const id = +c.req.param("id");
-  const password = await c.req.json();
-  const account = allAcounts.find((acc) => acc.id === id);
-  if (!account) return c.json({ message: "Cuenta no encontrada" });
+  const { password } = await c.req.json();
+  try {
+    const stmt = db.prepare(`UPDATE lol_accounts
+      SET password= ? WHERE id= ? RETURNING id, gameName, tagLine`);
 
-  account.password = password;
+    const account = stmt.get(password, id);
 
-  return c.json({ message: "Datos actualizados correctamente" });
+    return c.json({ message: "Datos actualizados correctamente", data: account });
+  } catch (error) {
+    console.error(error);
+  }
 };

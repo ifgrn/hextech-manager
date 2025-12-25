@@ -1,14 +1,18 @@
 import type { Context } from "hono";
 import { db } from "../db/db";
+import { hash_password } from "../utils/hash-password";
+import { sign_token } from "../utils/jwt-sign";
+import { setCookie } from "hono/cookie";
 
 export const createUser = async (c: Context) => {
   try {
-    const body = await c.req.json();
-    const { username, email, password } = body;
+    const { username, email, password } = await c.req.json();
 
     if (!username || !email || !password) {
       return c.json({ success: false, error: "Faltan campos requeridos" }, 400);
     }
+
+    const password_hashed = await hash_password(password);
 
     const stmt = db.prepare(`
             INSERT INTO users (username, email, password_hash)
@@ -16,7 +20,18 @@ export const createUser = async (c: Context) => {
             RETURNING id, username, email, created_at
         `);
 
-    const user = stmt.get(username, email, password);
+    const user = stmt.get(username, email, password_hashed);
+    const id = user.id;
+    console.log(id);
+    const token = await sign_token(id);
+
+    setCookie(c, "session", token, {
+      path: "/",
+      secure: Bun.env.MOD === "production",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "Strict",
+    });
 
     return c.json({ success: true, data: user }, 201);
   } catch (error: any) {
