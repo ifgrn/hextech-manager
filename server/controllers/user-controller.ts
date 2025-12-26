@@ -2,12 +2,9 @@ import type { Context } from "hono";
 import { db } from "../db/db";
 import { hash_password, verify_password } from "../utils/hash-password";
 import { setCookie } from "hono/cookie";
-import {
-  validateEmail,
-  validatePassword,
-  validateUsername,
-} from "../helpers/validations";
+import { validateEmail, validatePassword, validateUsername } from "../helpers/validations";
 import { setSessionCookie } from "../utils/jwt-cookies";
+import { COOKIE_OPTIONS } from "../utils/consts";
 
 type UserRow = {
   id: string;
@@ -22,14 +19,6 @@ type UserResponse = Omit<UserRow, "password_hash">;
 type LoginRow = {
   id: string;
   password_hash: string;
-};
-
-const COOKIE_OPTIONS = {
-  path: "/",
-  secure: Bun.env.MODE === "production",
-  httpOnly: true,
-  maxAge: 60 * 60 * 24 * 7, // 7 días
-  sameSite: "Strict" as const,
 };
 
 export const createUser = async (c: Context) => {
@@ -70,24 +59,15 @@ export const createUser = async (c: Context) => {
 
     await setSessionCookie(c, user.id);
 
-    return c.json(
-      { success: true, message: "Usuario creado exitosamente" },
-      201,
-    );
+    return c.json({ success: true, message: "Usuario creado exitosamente" }, 201);
   } catch (error: any) {
     console.error("Error en registro:", error);
 
     if (error.message?.includes("UNIQUE constraint failed: users.username")) {
-      return c.json(
-        { success: false, error: "El nombre de usuario ya existe" },
-        409,
-      );
+      return c.json({ success: false, error: "El nombre de usuario ya existe" }, 409);
     }
     if (error.message?.includes("UNIQUE constraint failed: users.email")) {
-      return c.json(
-        { success: false, error: "El email ya está registrado" },
-        409,
-      );
+      return c.json({ success: false, error: "El email ya está registrado" }, 409);
     }
 
     return c.json({ success: false, error: "Error interno del servidor" }, 500);
@@ -116,10 +96,7 @@ export const login = async (c: Context) => {
     const { username, password } = await c.req.json();
 
     if (!username || !password) {
-      return c.json(
-        { success: false, error: "Ambos campos son necesarios" },
-        400,
-      );
+      return c.json({ success: false, error: "Ambos campos son necesarios" }, 400);
     }
 
     const row = db
@@ -157,10 +134,7 @@ export const logout = async (c: Context) => {
       maxAge: 0,
     });
 
-    return c.json(
-      { success: true, message: "Sesión cerrada exitosamente" },
-      200,
-    );
+    return c.json({ success: true, message: "Sesión cerrada exitosamente" }, 200);
   } catch (error) {
     console.error("Logout error:", error);
     return c.json({ success: false, error: "Error interno del servidor" }, 500);

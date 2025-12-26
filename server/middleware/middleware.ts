@@ -3,7 +3,7 @@ import { getCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
 
 type JWTPayload = {
-  sub: number; // user ID
+  sub: string; // user ID
   iat?: number;
   exp?: number;
 };
@@ -19,13 +19,8 @@ export const middleware_auth = async (c: Context, next: Next) => {
     const jwt_secret = Bun.env.JWT_SECRET;
 
     if (!jwt_secret) {
-      console.error(
-        "JWT_SECRET no está configurado en las variables de entorno",
-      );
-      return c.json(
-        { success: false, error: "Error de configuración del servidor" },
-        500,
-      );
+      console.error("JWT_SECRET no está configurado en las variables de entorno");
+      return c.json({ success: false, error: "Error de configuración del servidor" }, 500);
     }
 
     const decoded_payload = (await verify(token, jwt_secret)) as JWTPayload;

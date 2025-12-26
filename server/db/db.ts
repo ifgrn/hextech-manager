@@ -5,11 +5,6 @@ db.run("PRAGMA foreign_keys = ON");
 
 function initalizeDatabase(): void {
   try {
-    db.run(`
-      DROP TABLE IF EXISTS users;
-      DROP TABLE IF EXISTS lol_accounts;
-      `);
-
     db.run(`CREATE TABLE IF not EXISTS users (
       id TEXT primary key default (lower(hex(randomblob(16)))),
       username text unique not null,
@@ -32,7 +27,8 @@ function initalizeDatabase(): void {
       server text not null,
       is_active boolean default 1,
       created_at timestamp default current_timestamp,
-      updated_at timestamp default current_timestamp
+      updated_at timestamp default current_timestamp,
+      FOREIGN KEY (owner_id) references users(id)
     )`);
   } catch (e) {
     console.error("❌ Error inicializando la base de datos:", e);

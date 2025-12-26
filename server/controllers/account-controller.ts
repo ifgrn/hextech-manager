@@ -2,22 +2,25 @@ import type { Context } from "hono";
 import type { Account } from "../types/types-d";
 import { get_puuid } from "../utils/riot-fecth";
 import { db } from "../db/db";
-const allAcounts: Array<Account> = [];
 
 export const addAccount = async (c: Context) => {
   const { nick, tagLine, username, password, server }: Account = await c.req.json();
 
   try {
+    const owner_id = c.get("userId");
+    if (!owner_id) throw new Error("No tienes authorizacion para registrar una cuenta");
+
     const puuid = await get_puuid(nick, tagLine);
+
     if (!puuid) throw new Error("El jugador no existe");
 
     const stmt = db.prepare(
       `INSERT INTO lol_accounts (owner_id, gameName, tagLine, puuid, acc_user, password, server)
-     values (?, ?, ?, ?, ?, ?, ? )
-     RETURNING  owner_id, puuid, acc_user, server`,
+      VALUES (?, ? , ? , ? , ? , ? , ?) RETURNING owner_id, gameName, tagLine, puuid, acc_user, server`,
     );
 
-    const account = stmt.get("noir", nick, tagLine, puuid, username, password, server);
+    const account = stmt.get(owner_id, nick, tagLine, puuid, username, password, server);
+    console.log(account);
     return c.json({ success: true, data: account }, 201);
   } catch (error) {
     console.error("Error creando la cuenta", error);
@@ -27,11 +30,13 @@ export const addAccount = async (c: Context) => {
 
 export const getAllActiveAcounts = (c: Context) => {
   try {
+    const owner_id = c.get("userId");
+    if (!owner_id) throw new Error("No estás autorizado para realizar esta acción");
     const stmt = db.prepare(
-      `SELECT * FROM lol_accounts WHERE is_active=1
+      `SELECT * FROM lol_accounts WHERE is_active=1 AND owner_id = ?
       ORDER BY updated_at DESC`,
     );
-    const accounts = stmt.all();
+    const accounts = stmt.all(owner_id);
     return c.json({ success: true, data: accounts });
   } catch (error) {
     console.error(error);
@@ -43,12 +48,54 @@ export const deleteAccountByID = (c: Context) => {
   const id = Number(c.req.param("id"));
 
   try {
+    const owner_id = c.get("userId");
+    if (!owner_id) throw new Error("No estás autorizado para realizar está acción");
+
     const stmt = db.prepare(`UPDATE lol_accounts
-      SET is_active= 0 WHERE id=?
+      SET is_active= 0 WHERE id= ? AND owner_id=?
       RETURNING id, gameName, tagLine, is_active`);
 
-    const accountdisabled = stmt.get(id);
-    return c.json({ success: true, data: accountdisabled });
+    const accountDisabled = stmt.get(id, owner_id);
+
+    if (!accountDisabled) {
+      return c.json(
+        {
+          success: false,
+          message: "Cuenta no encontrada o no autorizada",
+        },
+        404,
+      );
+    }
+    return c.json({ success: true, data: accountDisabled });
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const activeAccountByID = (c: Context) => {
+  const id = Number(c.req.param("id"));
+
+  try {
+    const owner_id = c.get("userId");
+    if (!owner_id) throw new Error("No estás autorizado para realizar está acción");
+
+    const stmt = db.prepare(`UPDATE lol_accounts
+      SET is_active=1 WHERE id= ? AND owner_id=?
+      RETURNING id, gameName, tagLine, is_active`);
+
+    const accountEnabled = stmt.get(id, owner_id);
+
+    if (!accountEnabled) {
+      return c.json(
+        {
+          success: false,
+          message: "Cuenta no encontrada o no autorizada",
+        },
+        404,
+      );
+    }
+    return c.json({ success: true, data: accountEnabled });
   } catch (error) {
     console.error(error);
     throw error;
