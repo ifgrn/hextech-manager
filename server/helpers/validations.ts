@@ -1,11 +1,14 @@
-export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+type ValidationSign = {
+  valid: boolean;
+  error?: string;
 };
 
-export const validatePassword = (
-  password: string,
-): { valid: boolean; error?: string } => {
+const validateEmail = (email: string): ValidationSign => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return { valid: emailRegex.test(email) };
+};
+
+const validatePassword = (password: string): ValidationSign => {
   if (password.length < 8) {
     return {
       valid: false,
@@ -33,9 +36,7 @@ export const validatePassword = (
   return { valid: true };
 };
 
-export const validateUsername = (
-  username: string,
-): { valid: boolean; error?: string } => {
+const validateUsername = (username: string): ValidationSign => {
   if (username.length < 3) {
     return {
       valid: false,
@@ -52,4 +53,12 @@ export const validateUsername = (
     };
   }
   return { valid: true };
+};
+
+export const validationSignUp = (
+  username: string,
+  email: string,
+  password: string,
+): ValidationSign => {
+  return validateUsername(username) && validateEmail(email) && validatePassword(password);
 };

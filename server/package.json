@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --env-file=.env --watch --hot index.ts"
+    "dev": "bun --env-file=.env --watch --hot index.ts",
+    "start": "bun server/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -13,6 +14,8 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@libsql/client": "^0.15.15",
+    "@tursodatabase/database": "^0.3.2",
     "hono": "^4.11.1"
   }
 }

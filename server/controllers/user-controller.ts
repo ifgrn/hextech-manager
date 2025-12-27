@@ -1,27 +1,19 @@
 import type { Context } from "hono";
-import { db } from "../db/db";
 import { hash_password, verify_password } from "../utils/hash-password";
-import { setCookie } from "hono/cookie";
-import { validateEmail, validatePassword, validateUsername } from "../helpers/validations";
-import { setSessionCookie } from "../utils/jwt-cookies";
-import { COOKIE_OPTIONS } from "../utils/consts";
+import { validationSignUp } from "../helpers/validations";
+import { deleteCookie, setSessionCookie } from "../utils/jwt-cookies";
+import { db } from "../db/turso-db";
 
-type UserRow = {
+type CreatedUser = {
   id: string;
-  username: string;
-  email: string;
-  password_hash: string;
-  created_at: string;
 };
-
-type UserResponse = Omit<UserRow, "password_hash">;
 
 type LoginRow = {
   id: string;
   password_hash: string;
 };
 
-export const createUser = async (c: Context) => {
+export const signup = async (c: Context) => {
   try {
     const { username, email, password } = await c.req.json();
 
@@ -29,29 +21,22 @@ export const createUser = async (c: Context) => {
       return c.json({ success: false, error: "Faltan campos requeridos" }, 400);
     }
 
-    const usernameValidation = validateUsername(username);
-    if (!usernameValidation.valid) {
-      return c.json({ success: false, error: usernameValidation.error }, 400);
-    }
+    const isValid = validationSignUp(username, email, password);
 
-    if (!validateEmail(email)) {
-      return c.json({ success: false, error: "Email inválido" }, 400);
-    }
-
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.valid) {
-      return c.json({ success: false, error: passwordValidation.error }, 400);
-    }
+    if (!isValid.valid) return c.json({ success: false, error: isValid.error });
 
     const password_hashed = await hash_password(password);
 
-    const stmt = db.prepare<UserResponse, [string, string, string]>(`
+    const stmt = await db.execute({
+      sql: `
       INSERT INTO users (username, email, password_hash)
       VALUES (?, ?, ?)
-      RETURNING id, username, email, created_at
-    `);
+      RETURNING id
+    `,
+      args: [username, email, password_hashed],
+    });
 
-    const user = stmt.get(username, email, password_hashed);
+    const user = stmt.rows[0] as CreatedUser | undefined;
 
     if (!user) {
       return c.json({ success: false, error: "Error al crear usuario" }, 500);
@@ -76,13 +61,13 @@ export const createUser = async (c: Context) => {
 
 export const getAllUsers = async (c: Context) => {
   try {
-    const stmt = db.prepare<UserResponse, []>(`
+    const stmt = await db.execute(`
       SELECT id, username, email, created_at
       FROM users
       ORDER BY created_at DESC
     `);
 
-    const users = stmt.all();
+    const users = stmt.rows;
 
     return c.json({ success: true, data: users }, 200);
   } catch (error) {
@@ -99,26 +84,27 @@ export const login = async (c: Context) => {
       return c.json({ success: false, error: "Ambos campos son necesarios" }, 400);
     }
 
-    const row = db
-      .prepare<LoginRow, [string]>(
-        `
+    const stmt = await db.execute({
+      sql: `
         SELECT id, password_hash
         FROM users
         WHERE username = ?
       `,
-      )
-      .get(username);
+      args: [username],
+    });
 
-    if (!row) {
+    const user = stmt.rows[0] as LoginRow | undefined;
+
+    if (!user) {
       return c.json({ success: false, error: "Credenciales inválidas" }, 401);
     }
 
-    const verified = await verify_password(password, row.password_hash);
+    const verified = await verify_password(password, user.password_hash);
     if (!verified) {
       return c.json({ success: false, error: "Credenciales inválidas" }, 401);
     }
 
-    await setSessionCookie(c, row.id);
+    await setSessionCookie(c, user.id);
 
     return c.json({ success: true, message: "Inicio de sesión exitoso" }, 200);
   } catch (error) {
@@ -129,10 +115,7 @@ export const login = async (c: Context) => {
 
 export const logout = async (c: Context) => {
   try {
-    setCookie(c, "session", "", {
-      ...COOKIE_OPTIONS,
-      maxAge: 0,
-    });
+    await deleteCookie(c);
 
     return c.json({ success: true, message: "Sesión cerrada exitosamente" }, 200);
   } catch (error) {
@@ -149,15 +132,16 @@ export const getCurrentUser = async (c: Context) => {
       return c.json({ success: false, error: "No autenticado" }, 401);
     }
 
-    const user = db
-      .prepare<UserResponse, [string]>(
-        `
+    const stmt = await db.execute({
+      sql: `
         SELECT id, username, email, created_at
         FROM users
         WHERE id = ?
       `,
-      )
-      .get(userId);
+      args: [userId],
+    });
+
+    const user = stmt.rows;
 
     if (!user) {
       return c.json({ success: false, error: "Usuario no encontrado" }, 404);

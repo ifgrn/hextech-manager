@@ -22,3 +22,10 @@ export const setSessionCookie = async (c: Context, userId: string) => {
   const token = (await sign_token(userId)) as string;
   setCookie(c, "session", token, COOKIE_OPTIONS);
 };
+
+export const deleteCookie = async (c: Context) => {
+  setCookie(c, "session", "", {
+    ...COOKIE_OPTIONS,
+    maxAge: 0,
+  });
+};

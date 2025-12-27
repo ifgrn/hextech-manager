@@ -1,61 +1,70 @@
 import type { Context } from "hono";
 import type { Account } from "../types/types-d";
 import { get_puuid } from "../utils/riot-fecth";
-import { db } from "../db/db";
+import { db } from "../db/turso-db";
 
 export const addAccount = async (c: Context) => {
   const { nick, tagLine, username, password, server }: Account = await c.req.json();
 
   try {
     const owner_id = c.get("userId");
-    if (!owner_id) throw new Error("No tienes authorizacion para registrar una cuenta");
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
     const puuid = await get_puuid(nick, tagLine);
 
-    if (!puuid) throw new Error("El jugador no existe");
+    if (!puuid) return c.json({ success: false, message: "El jugador no existe" }, 404);
 
-    const stmt = db.prepare(
-      `INSERT INTO lol_accounts (owner_id, gameName, tagLine, puuid, acc_user, password, server)
-      VALUES (?, ? , ? , ? , ? , ? , ?) RETURNING owner_id, gameName, tagLine, puuid, acc_user, server`,
-    );
+    const stmt = await db.execute({
+      sql: `INSERT INTO lol_accounts (owner_id, gameName, tagLine, puuid, acc_user, password, server)
+      VALUES (?, ? , ? , ? , ? , ? , ?) RETURNING id`,
+      args: [owner_id, nick, tagLine, puuid, username, password, server],
+    });
 
-    const account = stmt.get(owner_id, nick, tagLine, puuid, username, password, server);
-    console.log(account);
-    return c.json({ success: true, data: account }, 201);
+    const account = stmt.rows[0];
+    if (!account) {
+      return c.json({ success: false, message: "No se pudo crear la cuenta" }, 400);
+    }
+
+    return c.json({ success: true, message: "Cuenta guardada con éxito", data: account }, 201);
   } catch (error) {
-    console.error("Error creando la cuenta", error);
-    throw error;
+    return c.json({ success: false, message: error }, 500);
   }
 };
 
-export const getAllActiveAcounts = (c: Context) => {
+export const getAllActiveAcounts = async (c: Context) => {
   try {
     const owner_id = c.get("userId");
-    if (!owner_id) throw new Error("No estás autorizado para realizar esta acción");
-    const stmt = db.prepare(
-      `SELECT * FROM lol_accounts WHERE is_active=1 AND owner_id = ?
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
+    const stmt = await db.execute({
+      sql: `SELECT gameName, tagLine, server FROM lol_accounts WHERE is_active=1 AND owner_id = ?
       ORDER BY updated_at DESC`,
-    );
-    const accounts = stmt.all(owner_id);
+      args: [owner_id],
+    });
+    const accounts = stmt.rows;
+    if (accounts.length === 0)
+      return c.json({ success: false, message: "No se pudo acceder a las cuentas" }, 400);
+
     return c.json({ success: true, data: accounts });
   } catch (error) {
     console.error(error);
-    throw error;
+    return c.json({ success: false, message: error }, 500);
   }
 };
 
-export const deleteAccountByID = (c: Context) => {
-  const id = Number(c.req.param("id"));
-
+export const deleteAccountByID = async (c: Context) => {
   try {
+    const id = Number(c.req.param("id"));
     const owner_id = c.get("userId");
-    if (!owner_id) throw new Error("No estás autorizado para realizar está acción");
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
-    const stmt = db.prepare(`UPDATE lol_accounts
-      SET is_active= 0 WHERE id= ? AND owner_id=?
-      RETURNING id, gameName, tagLine, is_active`);
+    const stmt = await db.execute({
+      sql: `UPDATE lol_accounts
+      SET is_active=0, updated_at=current_timestamp WHERE id= ? AND owner_id=?
+      RETURNING id, gameName, tagLine, is_active`,
+      args: [id, owner_id],
+    });
 
-    const accountDisabled = stmt.get(id, owner_id);
+    const accountDisabled = stmt.rows[0];
 
     if (!accountDisabled) {
       return c.json(
@@ -69,22 +78,24 @@ export const deleteAccountByID = (c: Context) => {
     return c.json({ success: true, data: accountDisabled });
   } catch (error) {
     console.error(error);
-    throw error;
+    return c.json({ success: false, message: error }, 500);
   }
 };
 
-export const activeAccountByID = (c: Context) => {
-  const id = Number(c.req.param("id"));
-
+export const activeAccountByID = async (c: Context) => {
   try {
+    const id = Number(c.req.param("id"));
     const owner_id = c.get("userId");
-    if (!owner_id) throw new Error("No estás autorizado para realizar está acción");
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
-    const stmt = db.prepare(`UPDATE lol_accounts
-      SET is_active=1 WHERE id= ? AND owner_id=?
-      RETURNING id, gameName, tagLine, is_active`);
+    const stmt = await db.execute({
+      sql: `UPDATE lol_accounts
+      SET is_active=1 , updated_at=current_timestamp WHERE id= ? AND owner_id=?
+      RETURNING id, gameName, tagLine, is_active`,
+      args: [id, owner_id],
+    });
 
-    const accountEnabled = stmt.get(id, owner_id);
+    const accountEnabled = stmt.rows[0];
 
     if (!accountEnabled) {
       return c.json(
@@ -98,21 +109,33 @@ export const activeAccountByID = (c: Context) => {
     return c.json({ success: true, data: accountEnabled });
   } catch (error) {
     console.error(error);
-    throw error;
+    return c.json({ success: false, message: error }, 500);
   }
 };
 
 export const updateAccountByID = async (c: Context) => {
-  const id = +c.req.param("id");
-  const { password } = await c.req.json();
   try {
-    const stmt = db.prepare(`UPDATE lol_accounts
-      SET password= ? WHERE id= ? RETURNING id, gameName, tagLine`);
+    const id = +c.req.param("id");
 
-    const account = stmt.get(password, id);
+    const { password } = await c.req.json();
+
+    const owner_id = c.get("userId");
+
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
+
+    const stmt = await db.execute({
+      sql: `UPDATE lol_accounts
+      SET password= ? , updated_at=current_timestamp WHERE id=? AND owner_id=? RETURNING id, gameName, tagLine`,
+      args: [password, id, owner_id],
+    });
+
+    const account = stmt.rows[0];
+    if (!account)
+      return c.json({ success: false, message: "No se pudo acceder a las cuentas" }, 400);
 
     return c.json({ message: "Datos actualizados correctamente", data: account });
   } catch (error) {
     console.error(error);
+    return c.json({ success: false, message: error }, 500);
   }
 };

@@ -38,4 +38,4 @@ function initalizeDatabase(): void {
 
 initalizeDatabase();
 
-export { db };
+// export { db };
