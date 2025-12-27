@@ -9,7 +9,6 @@ const app = new Hono();
 
 app.use(logger());
 
-app.use("/", async (c) => c.text("Hola"));
 app.route("/api/v1/users", users);
 app.route("/api/v1/accounts", accounts);
 
