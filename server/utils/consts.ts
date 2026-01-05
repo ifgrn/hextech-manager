@@ -9,3 +9,5 @@ export const COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 7, // 7 días
   sameSite: "Strict" as const,
 };
+
+export const lol_skins_json = "https://lolskin.info/data/flat-skins/en-us.json";
