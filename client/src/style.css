@@ -1,159 +1,96 @@
-@import url("https://unpkg.com/normalize.css") layer(normalize);
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
 
-@layer normalize,  base, layout, components;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
 
-@font-face {
-    font-family: "General Sans";
-    src: url("/fonts/GeneralSans-Variable.woff2") format("woff2");
-    font-weight: 100 900;
-    font-style: normal;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer base {
-    :root {
-        color-scheme: dark;
-        --main-font-family: "General Sans";
-        --bg: #000;
-        --fg: #ffffff;
-    }
-
-    *,
-    *::after,
-    *::before {
-        font-family:
-            "General Sans",
-            system-ui,
-            -apple-system;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        background-color: var(--bg);
-        color: var(--fg);
-    }
-
-    a {
-        text-decoration: none;
-    }
-
-    img {
-        display: block;
-    }
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
 }
 
-@layer layout {
-    header {
-        position: sticky;
-        top: 0;
-        left: 0;
-        padding: 1rem 0.4rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        z-index: 1000;
-    }
-
-    body {
-        display: block;
-        height: 100dvh;
-    }
-
-    .hero-container {
-        display: grid;
-        padding: 2.5rem 2rem;
-        gap: 2rem;
-
-        & a {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 0.5rem;
-            justify-self: start;
-            box-shadow:
-                1px 1px rgba(255, 255, 255),
-                2px 2px rgba(255, 255, 255),
-                3px 3px rgba(255, 255, 255),
-                4px 4px rgba(255, 255, 255),
-                5px 5px 0 0 rgba(255, 255, 255);
-        }
-    }
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
 }
 
-@layer components {
-    header {
-        background-color: var(--bg);
-    }
-    .logo-container {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
 
-        & p {
-            font-size: 16px;
-            text-transform: uppercase;
-        }
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
 
-        & img {
-            height: 32px;
-            width: 32px;
-            object-fit: contain;
-        }
-    }
-    .nav-icons {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.vanilla:hover {
+  filter: drop-shadow(0 0 2em #3178c6aa);
+}
 
-        & img {
-            height: 24px;
-            width: 24px;
-            cursor: pointer;
-        }
-    }
+.card {
+  padding: 2em;
+}
 
-    .icon-btn {
-        all: unset;
-        display: grid;
-        place-items: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 0.5rem;
-        cursor: pointer;
-    }
+.read-the-docs {
+  color: #888;
+}
 
-    .icon-btn:focus-visible {
-        outline: 2px solid currentColor;
-        outline-offset: 2px;
-    }
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
 
-    .icon-btn img {
-        width: 24px;
-        height: 24px;
-        pointer-events: none;
-    }
-
-    .header_main {
-        border-bottom: 1px solid rgba(124, 113, 119, 0.2);
-    }
-
-    .hero-container {
-        & h1 {
-            font-size: clamp(1rem, 6vw, 4.5rem);
-            line-height: 1.1;
-            color: #d2d2d2;
-            font-weight: 500;
-        }
-
-        & a {
-            background-color: var(--fg);
-            color: black;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            border: 0.5px solid rgba(0, 0, 0, 0.8);
-            font-weight: 450;
-        }
-    }
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
 }
