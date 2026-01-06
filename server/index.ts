@@ -10,7 +10,7 @@ const app = new Hono();
 
 app.use(logger());
 
-app.use("/", cors());
+app.use("*", cors());
 
 app.route("/api/v1/users", users);
 app.route("/api/v1/accounts", accounts);

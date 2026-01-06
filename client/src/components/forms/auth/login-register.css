@@ -1,0 +1,94 @@
+.auth-box {
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 400px;
+    margin: 0 auto;
+
+    & h3 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--accent-color);
+    }
+
+    & p {
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+}
+
+#auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    & .btn-primary {
+        padding: 12px;
+        background-color: var(--accent-color);
+        color: var(--bg-dark);
+        font-weight: 600;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--accent-hover);
+        }
+    }
+}
+
+.form-fields {
+    display: grid;
+    gap: 1.25rem;
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        & label {
+            color: var(--accent-color);
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase; /* Estilo muy común en interfaces de juegos */
+            letter-spacing: 0.05em;
+        }
+    }
+}
+
+input {
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-dark);
+    color: #fff;
+    padding: 10px 12px;
+    font-size: 14px;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    outline: none;
+
+    &::placeholder {
+        color: #4b5563;
+    }
+
+    /* Feedback vital para el usuario */
+    &:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+    }
+
+    /* Estilo cuando el input es inválido (según el atributo que hablamos antes) */
+    &[aria-invalid="true"] {
+        border-color: var(--error-color);
+    }
+}
+
+.forget-btn {
+    text-decoration: underline;
+    opacity: 0.8;
+    font-size: 14px;
+}
