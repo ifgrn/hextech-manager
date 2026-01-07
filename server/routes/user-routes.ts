@@ -7,7 +7,7 @@ const users = new Hono();
 users.get("/", getAllUsers);
 users.post("/register", signup);
 users.post("/login", login);
-users.get("current", getCurrentUser);
-users.post("logout", logout);
+users.get("/current", middleware_auth, getCurrentUser);
+users.post("/logout", middleware_auth, logout);
 
 export default users;

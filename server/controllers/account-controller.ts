@@ -112,3 +112,24 @@ export const activeAccountByID = async (c: Context) => {
     return c.json({ success: false, message: "Error al activar" }, 500);
   }
 };
+
+
+export const getAllActiveAcounts = async (c: Context) => {
+  try {
+    const owner_id = getAuthorizedUser(c);
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
+    const stmt = await db.execute({
+      sql: `SELECT gameName, tagLine, server FROM lol_accounts WHERE is_active=1 AND owner_id = ?
+      ORDER BY updated_at DESC`,
+      args: [owner_id],
+    });
+    const accounts = stmt.rows;
+    if (accounts.length === 0)
+      return c.json({ success: false, message: "No se pudo acceder a las cuentas" }, 400);
+
+    return c.json({ success: true, data: accounts });
+  } catch (error) {
+    console.error(error);
+    return c.json({ success: false, message: error }, 500);
+  }
+};
