@@ -11,131 +11,67 @@ export const addAccount = async (c: Context) => {
     if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
     const puuid = await get_puuid(nick, tagLine);
-
-    if (!puuid) return c.json({ success: false, message: "El jugador no existe" }, 404);
+    if (!puuid) return c.json({ success: false, message: "El jugador no existe en Riot" }, 404);
 
     const stmt = await db.execute({
       sql: `INSERT INTO lol_accounts (owner_id, gameName, tagLine, puuid, acc_user, password, server)
-      VALUES (?, ? , ? , ? , ? , ? , ?) RETURNING id`,
+            VALUES (?, ? , ? , ? , ? , ? , ?) RETURNING id, gameName, tagLine`,
       args: [owner_id, nick, tagLine, puuid, username, password, server],
     });
 
-    const account = stmt.rows[0];
-    if (!account) {
-      return c.json({ success: false, message: "No se pudo crear la cuenta" }, 400);
+    return c.json({ success: true, message: "Cuenta vinculada con éxito", data: stmt.rows[0] }, 201);
+  } catch (error: any) {
+    // Manejo de error si el PUUID ya existe (cuenta duplicada)
+    if (error.message?.includes("UNIQUE constraint failed")) {
+      return c.json({ success: false, message: "Esta cuenta ya está registrada" }, 409);
     }
-
-    return c.json({ success: true, message: "Cuenta guardada con éxito", data: account }, 201);
-  } catch (error) {
-    return c.json({ success: false, message: error }, 500);
-  }
-};
-
-export const getAllActiveAcounts = async (c: Context) => {
-  try {
-    const owner_id = c.get("userId");
-    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
-    const stmt = await db.execute({
-      sql: `SELECT gameName, tagLine, server FROM lol_accounts WHERE is_active=1 AND owner_id = ?
-      ORDER BY updated_at DESC`,
-      args: [owner_id],
-    });
-    const accounts = stmt.rows;
-    if (accounts.length === 0)
-      return c.json({ success: false, message: "No se pudo acceder a las cuentas" }, 400);
-
-    return c.json({ success: true, data: accounts });
-  } catch (error) {
-    console.error(error);
-    return c.json({ success: false, message: error }, 500);
+    return c.json({ success: false, message: "Error interno del servidor" }, 500);
   }
 };
 
 export const deleteAccountByID = async (c: Context) => {
   try {
-    const id = Number(c.req.param("id"));
+    const id = c.req.param("id"); // ✅ Removido Number()
     const owner_id = c.get("userId");
-    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
     const stmt = await db.execute({
-      sql: `UPDATE lol_accounts
-      SET is_active=0, updated_at=current_timestamp WHERE id= ? AND owner_id=?
-      RETURNING id, gameName, tagLine, is_active`,
+      sql: `UPDATE lol_accounts 
+            SET is_active = 0, 
+                updated_at = (strftime('%s', 'now') * 1000) 
+            WHERE id = ? AND owner_id = ?
+            RETURNING id, gameName, is_active`,
       args: [id, owner_id],
     });
 
-    const accountDisabled = stmt.rows[0];
-
-    if (!accountDisabled) {
-      return c.json(
-        {
-          success: false,
-          message: "Cuenta no encontrada o no autorizada",
-        },
-        404,
-      );
+    if (stmt.rows.length === 0) {
+      return c.json({ success: false, message: "Cuenta no encontrada" }, 404);
     }
-    return c.json({ success: true, data: accountDisabled });
+
+    return c.json({ success: true, data: stmt.rows[0] });
   } catch (error) {
-    console.error(error);
-    return c.json({ success: false, message: error }, 500);
-  }
-};
-
-export const activeAccountByID = async (c: Context) => {
-  try {
-    const id = Number(c.req.param("id"));
-    const owner_id = c.get("userId");
-    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
-
-    const stmt = await db.execute({
-      sql: `UPDATE lol_accounts
-      SET is_active=1 , updated_at=current_timestamp WHERE id= ? AND owner_id=?
-      RETURNING id, gameName, tagLine, is_active`,
-      args: [id, owner_id],
-    });
-
-    const accountEnabled = stmt.rows[0];
-
-    if (!accountEnabled) {
-      return c.json(
-        {
-          success: false,
-          message: "Cuenta no encontrada o no autorizada",
-        },
-        404,
-      );
-    }
-    return c.json({ success: true, data: accountEnabled });
-  } catch (error) {
-    console.error(error);
-    return c.json({ success: false, message: error }, 500);
+    return c.json({ success: false, message: "Error al desactivar" }, 500);
   }
 };
 
 export const updateAccountByID = async (c: Context) => {
   try {
-    const id = +c.req.param("id");
-
+    const id = c.req.param("id"); // ✅ Removido +
     const { password } = await c.req.json();
-
     const owner_id = c.get("userId");
-
-    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
     const stmt = await db.execute({
       sql: `UPDATE lol_accounts
-      SET password= ? , updated_at=current_timestamp WHERE id=? AND owner_id=? RETURNING id, gameName, tagLine`,
+            SET password = ?, 
+                updated_at = (strftime('%s', 'now') * 1000) 
+            WHERE id = ? AND owner_id = ? 
+            RETURNING id, gameName, tagLine`,
       args: [password, id, owner_id],
     });
 
-    const account = stmt.rows[0];
-    if (!account)
-      return c.json({ success: false, message: "No se pudo acceder a las cuentas" }, 400);
+    if (stmt.rows.length === 0) return c.json({ success: false, message: "No se pudo actualizar" }, 400);
 
-    return c.json({ message: "Datos actualizados correctamente", data: account });
+    return c.json({ success: true, message: "Password actualizado", data: stmt.rows[0] });
   } catch (error) {
-    console.error(error);
-    return c.json({ success: false, message: error }, 500);
+    return c.json({ success: false, message: "Error de servidor" }, 500);
   }
 };
