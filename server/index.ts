@@ -10,7 +10,15 @@ const app = new Hono();
 
 app.use(logger());
 
-app.use("*", cors());
+app.use(
+  "*",
+  cors({
+    origin: "http://localhost:5173",
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["POST", "GET", "OPTIONS", "PUT", "DELETE"],
+    credentials: true,
+  }),
+);
 
 app.route("/api/v1/users", users);
 app.route("/api/v1/accounts", accounts);
