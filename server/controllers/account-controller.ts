@@ -3,11 +3,18 @@ import type { Account } from "../types/types-d";
 import { get_puuid } from "../utils/riot-fecth";
 import { db } from "../db/turso-db";
 
+
+const getAuthorizedUser = (c: Context) => {
+  const userId = c.get("userId");
+  if (!userId) return null;
+  return userId;
+};
+
 export const addAccount = async (c: Context) => {
   const { nick, tagLine, username, password, server }: Account = await c.req.json();
 
   try {
-    const owner_id = c.get("userId");
+    const owner_id = getAuthorizedUser(c);
     if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
     const puuid = await get_puuid(nick, tagLine);
@@ -32,12 +39,14 @@ export const addAccount = async (c: Context) => {
 export const deleteAccountByID = async (c: Context) => {
   try {
     const id = c.req.param("id"); // ✅ Removido Number()
-    const owner_id = c.get("userId");
+    const owner_id = getAuthorizedUser(c);
+
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
     const stmt = await db.execute({
       sql: `UPDATE lol_accounts 
             SET is_active = 0, 
-                updated_at = (strftime('%s', 'now') * 1000) 
+                updated_at = (strftime('%s', 'now')) 
             WHERE id = ? AND owner_id = ?
             RETURNING id, gameName, is_active`,
       args: [id, owner_id],
@@ -57,12 +66,13 @@ export const updateAccountByID = async (c: Context) => {
   try {
     const id = c.req.param("id"); // ✅ Removido +
     const { password } = await c.req.json();
-    const owner_id = c.get("userId");
+    const owner_id = getAuthorizedUser(c);
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
 
     const stmt = await db.execute({
       sql: `UPDATE lol_accounts
             SET password = ?, 
-                updated_at = (strftime('%s', 'now') * 1000) 
+                updated_at=(strftime('%s', 'now')) 
             WHERE id = ? AND owner_id = ? 
             RETURNING id, gameName, tagLine`,
       args: [password, id, owner_id],
@@ -73,5 +83,32 @@ export const updateAccountByID = async (c: Context) => {
     return c.json({ success: true, message: "Password actualizado", data: stmt.rows[0] });
   } catch (error) {
     return c.json({ success: false, message: "Error de servidor" }, 500);
+  }
+};
+
+export const activeAccountByID = async (c: Context) => {
+  try {
+    const id = c.req.param("id"); // ✅ Corregido: ya no es Number
+    const owner_id = getAuthorizedUser(c);
+
+    if (!owner_id) return c.json({ success: false, message: "No estás autorizado" }, 401);
+
+    const stmt = await db.execute({
+      sql: `UPDATE lol_accounts
+            SET is_active = 1, 
+                updated_at = (strftime('%s', 'now') * 1000) 
+            WHERE id = ? AND owner_id = ?
+            RETURNING id, gameName, tagLine, is_active`,
+      args: [id, owner_id],
+    });
+
+    if (stmt.rows.length === 0) {
+      return c.json({ success: false, message: "Cuenta no encontrada o no pertenece al usuario" }, 404);
+    }
+
+    return c.json({ success: true, data: stmt.rows[0] });
+  } catch (error) {
+    console.error(error);
+    return c.json({ success: false, message: "Error al activar" }, 500);
   }
 };
