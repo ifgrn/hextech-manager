@@ -56,4 +56,4 @@ const migrate = async () => {
   }
 };
 
-migrate();
+export { migrate };

@@ -4,7 +4,7 @@ export const url_consts = {
 
 export const COOKIE_OPTIONS = {
   path: "/",
-  secure: Bun.env.MOD,
+  secure: process.env.NODE_ENV === "production",
   httpOnly: true,
   maxAge: 60 * 60 * 24 * 7, // 7 días
   sameSite: "Strict" as const,

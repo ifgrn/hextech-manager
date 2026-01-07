@@ -98,6 +98,7 @@ export const login = async (c: Context) => {
         SELECT id, password_hash, username
         FROM users
         WHERE username = ?
+        LIMIT 1
       `,
       args: [username],
     });
@@ -150,14 +151,14 @@ export const getCurrentUser = async (c: Context) => {
 
     const stmt = await db.execute({
       sql: `
-        SELECT id, username, email, created_at
+        SELECT id, username, email
         FROM users
         WHERE id = ?
       `,
       args: [userId],
     });
 
-    const user = stmt.rows;
+    const user = stmt.rows[0];
 
     if (!user) {
       return c.json({ success: false, error: "Usuario no encontrado" }, 404);
