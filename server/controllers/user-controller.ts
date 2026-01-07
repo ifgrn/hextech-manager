@@ -6,6 +6,7 @@ import { db } from "../db/turso-db";
 
 type CreatedUser = {
   id: string;
+  username: string;
 };
 
 type LoginRow = {
@@ -32,7 +33,7 @@ export const signup = async (c: Context) => {
       sql: `
       INSERT INTO users (username, email, password_hash)
       VALUES (?, ?, ?)
-      RETURNING id
+      RETURNING id, username
     `,
       args: [username, email, password_hashed],
     });
@@ -45,7 +46,14 @@ export const signup = async (c: Context) => {
 
     await setSessionCookie(c, user.id);
 
-    return c.json({ success: true, message: "Usuario creado exitosamente" }, 201);
+    return c.json(
+      {
+        success: true,
+        message: "Usuario creado exitosamente",
+        user: { id: user.id, username: user.username },
+      },
+      201,
+    );
   } catch (error: any) {
     console.error("Error en registro:", error);
 
