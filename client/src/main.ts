@@ -1,18 +1,14 @@
-import { login_page } from "./pages/login-page/login-page";
-import { handleLogin } from "./services/auth";
-import "./style.css";
+import './assets/main.css'
 
-const app = document.querySelector<HTMLDivElement>("#app");
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 
-const initApp = () => {
-  if (app) {
-    // Inyectamos el contenido
-    app.innerHTML = login_page();
+import App from './App.vue'
+import router from './router'
 
-    // Vinculamos los eventos DESPUÉS de inyectar
-    handleLogin();
-  }
-};
+const app = createApp(App)
 
-// Ejecutamos la inicialización
-initApp();
+app.use(createPinia())
+app.use(router)
+
+app.mount('#app')
