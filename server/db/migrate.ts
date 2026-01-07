@@ -55,5 +55,3 @@ const migrate = async () => {
     console.log(e);
   }
 };
-
-export { migrate };
