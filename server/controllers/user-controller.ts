@@ -11,6 +11,7 @@ type CreatedUser = {
 type LoginRow = {
   id: string;
   password_hash: string;
+  username: string;
 };
 
 export const signup = async (c: Context) => {
@@ -86,7 +87,7 @@ export const login = async (c: Context) => {
 
     const stmt = await db.execute({
       sql: `
-        SELECT id, password_hash
+        SELECT id, password_hash, username
         FROM users
         WHERE username = ?
       `,
@@ -106,7 +107,14 @@ export const login = async (c: Context) => {
 
     await setSessionCookie(c, user.id);
 
-    return c.json({ success: true, message: "Inicio de sesión exitoso" }, 200);
+    return c.json(
+      {
+        success: true,
+        message: "Inicio de sesión exitoso",
+        user: { id: user.id, username: user.username },
+      },
+      200,
+    );
   } catch (error) {
     console.error("Login error:", error);
     return c.json({ success: false, error: "Error interno del servidor" }, 500);
