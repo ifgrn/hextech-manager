@@ -1,87 +1,104 @@
 <template>
-  <div>
-    <div class="border-r border-t border-l w-fit flex rounded-none border-white/20">
-      <button class="p-3 bg-[#161413]" :class="authMethod === 'login'
-        ? 'bg-[#171718] text-white font-medium'
-        : 'opacity-20'" @click="authMethod = 'login'">
-        Sign In
-      </button>
-      <button class="p-3" :class="authMethod === 'register'
-        ? 'bg-[#171718] text-white font-medium'
-        : 'opacity-20'" @click="authMethod = 'register'">
-        Sign Up
-      </button>
+  <div
+    class="border rounded-none border-white/20 w-85.5 p-6 flex flex-col gap-6 md:w-100 bg-[#0c0a09]"
+  >
+    <div class="flex flex-col gap-2">
+      <h3 class="text-2xl font-semibold text-white">
+        {{ title }}
+      </h3>
+      <p class="text-sm opacity-70 text-white">
+        {{ description }}
+      </p>
     </div>
-    <div class="border rounded-none border-white/20  w-85.5 p-6 flex flex-col gap-6 md:w-100 bg-[#0c0a09]">
-      <div class="flex flex-col gap-2">
-        <h3 class="text-2xl font-semibold">
-          {{ authMethod === 'login' ? 'Sign In' : 'Sign Up' }}
-        </h3>
-        <p class="text-sm opacity-70">
-          {{ authMethod === 'login' ? signInMsg : signUpmsg }}
-        </p>
+
+    <form ref="authForm" @submit.prevent="handleSubmit" class="flex flex-col gap-6" novalidate>
+      <div v-for="input in inputs" :key="input.id" class="flex flex-col gap-2">
+        <label :for="input.id" class="text-white text-sm font-medium">
+          {{ input.label }}
+        </label>
+        <input
+          :id="input.id"
+          :name="input.name"
+          :type="input.type"
+          :placeholder="input.placeholder"
+          :required="input.required"
+          :aria-label="input.label"
+          v-model="formValues[input.id]"
+          class="p-3 border rounded-none border-white/50 bg-transparent text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors"
+        />
       </div>
-      <form ref="authForm" @submit.prevent="submitForm" class="flex flex-col gap-6">
-        <div v-for="input in formInputs" :key="input.id" class="flex flex-col gap-2">
-          <label :for="input.id">{{ input.label }}</label>
-          <input :id="input.id" :name="input.name" :type="input.type" :placeholder="input.placeholder"
-            :required="input.required" v-model="formValues[input.id]" class="p-3 border rounded-none border-white/50" />
-        </div>
 
-        <a v-if="authMethod === 'login'" class="text-sm opacity-70 underline hover:opacity-100">
-          Forgot your password?
-        </a>
+      <button
+        v-if="showForgotPassword"
+        type="button"
+        class="text-sm opacity-70 underline hover:opacity-100 text-white text-left"
+      >
+        Forgot your password?
+      </button>
 
-        <button class="border rounded-none bg-white text-black p-3 font-medium">
-          {{ authMethod === 'login' ? 'Login' : 'Create account' }}
-        </button>
-      </form>
-    </div>
+      <button
+        type="submit"
+        :disabled="isSubmitting"
+        class="border rounded-none bg-white text-black p-3 font-medium hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {{ isSubmitting ? 'Loading...' : submitButtonText }}
+      </button>
+    </form>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { loginHandler, signUpHandler } from '@/service/auth-service';
-import { LoginInputs, registerInputs } from '@/utils/login-consts';
-import { computed, reactive, ref, watch } from 'vue';
+import type { FormInput } from '@/types/types'
+import { reactive, ref, watch } from 'vue'
 
-const signInMsg = "Enter your email below to login to your account"
-const signUpmsg = "Enter your information to create an account"
+const emit = defineEmits<{
+  submit: [formData: FormData]
+}>()
 
-const authMethod = ref<'login' | 'register'>('login')
-const formInputs = computed(() =>
-  authMethod.value === 'login' ? LoginInputs : registerInputs
+const props = defineProps<{
+  title: string
+  description: string
+  inputs: FormInput[]
+  submitButtonText: string
+  showForgotPassword?: boolean
+}>()
+
+const formValues = reactive<Record<string, string>>({})
+const authForm = ref<HTMLFormElement | null>(null)
+const isSubmitting = ref(false)
+
+watch(
+  () => props.inputs,
+  (newInputs) => {
+    Object.keys(formValues).forEach((key) => delete formValues[key])
+    newInputs.forEach((input) => {
+      formValues[input.id] = ''
+    })
+  },
+  { immediate: true },
 )
 
-const formValues = reactive<Record<string, string>>({});
-const authForm = ref<HTMLFormElement | null>(null)
+function handleSubmit() {
+  if (!authForm.value || isSubmitting.value) return
 
+  const formData = new FormData(authForm.value)
+  isSubmitting.value = true
 
-// Resetea los valores cada vez que cambias tab
-watch(authMethod, () => {
-  // Inicializa todos los campos en blanco
-  Object.keys(formValues).forEach(key => delete formValues[key]);
-  formInputs.value.forEach(input => {
-    formValues[input.id] = '';
-  });
-});
+  emit('submit', formData)
 
-async function submitForm() {
-  if (!authForm.value) return;
-
-  const formData = new FormData(authForm.value);
-
-  const submit = authMethod.value === 'login'
-    ? await loginHandler(formData)
-    : await signUpHandler(formData);
-
-  console.log(submit);
-
-  formInputs.value.forEach(input => {
-    return formValues[input.id] = ""
-  })
-  return submit
+  setTimeout(() => {
+    isSubmitting.value = false
+  }, 500)
 }
+
+defineExpose({
+  resetForm: () => {
+    props.inputs.forEach((input) => {
+      formValues[input.id] = ''
+    })
+    authForm.value?.reset()
+  },
+})
 </script>
 
 <style scoped></style>

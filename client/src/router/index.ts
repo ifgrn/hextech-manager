@@ -1,4 +1,5 @@
 import AuthView from '@/views/AuthView.vue'
+import DashboardView from '@/views/DashboardView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -9,6 +10,11 @@ const router = createRouter({
       name: 'auth',
       component: AuthView,
     },
+    {
+      path: "/dashboard",
+      name: "dashboard",
+      component: DashboardView
+    }
   ],
 })
 
