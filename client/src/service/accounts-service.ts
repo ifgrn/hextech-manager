@@ -7,7 +7,7 @@ export const addAccountService = async (formData: FormData) => {
   const tagLine = formData.get('tagLine') as string
   const server = formData.get('server') as string
 
-  const response = await fetch(`${API_URL}api/v1/users/register`, {
+  const response = await fetch(`${API_URL}api/v1/accounts/add`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: "include",
