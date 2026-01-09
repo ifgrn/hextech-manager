@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import HeaderLayout from './components/HeaderLayout.vue'
+import HeaderLayout from './components/HeaderLayout.vue';
 </script>
 
 <template>
-  <div>
-    <HeaderLayout />
-    <main>
-      <RouterView />
-    </main>
-  </div>
+  <HeaderLayout />
+  <main class="w-full flex items-center">
+    <RouterView />
+  </main>
 </template>
 
 <style scoped></style>

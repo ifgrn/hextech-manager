@@ -11,7 +11,7 @@
       </p>
     </div>
 
-    <form ref="authForm" @submit.prevent="handleSubmit" class="flex flex-col gap-6" novalidate>
+    <form ref="authForm" @submit.prevent="handleSubmit" class="flex flex-col gap-6">
       <div v-for="input in inputs" :key="input.id" class="flex flex-col gap-2">
         <label :for="input.id" class="text-white text-sm font-medium">
           {{ input.label }}

@@ -60,3 +60,48 @@ export const registerInputs = [
   },
 ]
 
+export const addAccountInputs = [
+  {
+    placeholder: 'Hide on bush',
+    label: 'GameName',
+    required: true,
+    id: 'gamename',
+    name: 'gamename',
+    type: 'text',
+  },
+  {
+    placeholder: '#KR1',
+    label: 'TagLine',
+    required: true,
+    id: 'tagline',
+    name: 'tagline',
+    type: 'text',
+  },
+  {
+    placeholder: 'KR',
+    label: 'Server',
+    required: true,
+    id: 'server',
+    name: 'server',
+    type: 'text',
+  },
+  {
+    placeholder: 'midvlad123',
+    label: 'Username',
+    required: true,
+    id: 'username',
+    name: 'username',
+    type: 'text',
+  },
+  {
+    placeholder: 'password',
+    label: 'Password',
+    required: true,
+    id: 'password',
+    name: 'password',
+    type: 'password',
+  },
+
+]
+
+

@@ -1,3 +1,5 @@
+<script lang="ts" setup></script>
+
 <template>
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -8,13 +10,14 @@
     stroke-linecap="round"
     stroke-linejoin="round"
     stroke-width="2"
-    class="lucide lucide-menu-icon lucide-menu"
+    class="lucide lucide-eye-icon lucide-eye"
     viewBox="0 0 24 24"
   >
-    <path d="M4 5h16M4 12h16M4 19h16" />
+    <path
+      d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+    />
+    <circle cx="12" cy="12" r="3" />
   </svg>
 </template>
-
-<script lang="ts" setup></script>
 
 <style scoped></style>

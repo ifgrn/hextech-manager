@@ -37,3 +37,18 @@ export const signUpHandler = async (formdata: FormData) => {
 }
 
 
+export const signoutHandler = async () => {
+  const response = await fetch(`${API_URL}api/v1/users/logout`, {
+    method: 'POST',
+    credentials: "include",
+  })
+
+  if (!response.ok) return { data: null, message: "No se pudo realizar la petición" }
+
+  const data = await response.json()
+
+  return data
+}
+
+
+

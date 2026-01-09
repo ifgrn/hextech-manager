@@ -1,20 +1,16 @@
 <template>
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
+    width="14"
+    height="14"
     fill="none"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
     stroke-width="2"
-    class="lucide lucide-menu-icon lucide-menu"
+    class="lucide lucide-log-out-icon lucide-log-out"
     viewBox="0 0 24 24"
   >
-    <path d="M4 5h16M4 12h16M4 19h16" />
+    <path d="m16 17 5-5-5-5m5 5H9m0 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
   </svg>
 </template>
-
-<script lang="ts" setup></script>
-
-<style scoped></style>
