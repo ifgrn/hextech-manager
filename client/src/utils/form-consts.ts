@@ -66,7 +66,7 @@ export const addAccountInputs = [
     label: 'GameName',
     required: true,
     id: 'gamename',
-    name: 'gamename',
+    name: 'nick',
     type: 'text',
   },
   {
@@ -74,7 +74,7 @@ export const addAccountInputs = [
     label: 'TagLine',
     required: true,
     id: 'tagline',
-    name: 'tagline',
+    name: 'tagLine',
     type: 'text',
   },
   {

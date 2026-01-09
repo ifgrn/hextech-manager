@@ -22,7 +22,7 @@ export const signUpHandler = async (formdata: FormData) => {
   const username = formdata.get('username') as string
   const email = formdata.get('email') as string
   const password = formdata.get('password') as string
-  const response = await fetch(`${API_URL}api/v1/users/register`, {
+  const response = await fetch(`${API_URL}api/v1/account/add`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: "include",

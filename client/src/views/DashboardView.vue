@@ -2,12 +2,12 @@
 import AccountCard from '@/components/dashboard/AccountCard.vue';
 import AddAccountBtn from '@/components/dashboard/AddAccountBtn.vue';
 import UserMenu from '@/components/dashboard/UserMenu.vue';
+import { addAccountService } from '@/service/accounts-service';
 import { signoutHandler } from '@/service/auth-service';
 import { noir } from '@/utils/const';
 import { addAccountInputs } from '@/utils/form-consts';
 import { useRouter } from 'vue-router';
 
-const x = () => 'hola';
 const router = useRouter();
 
 const signOutAction = async () => {
@@ -19,13 +19,24 @@ const signOutAction = async () => {
     console.log(error);
   }
 };
+
+const addAcctounAction = async (formData: FormData) => {
+  try {
+    const response = await addAccountService(formData);
+    if (response.success) {
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
 </script>
 
 <template>
   <section class="flex flex-col mx-auto mt-5 sm:mt-10 gap-4 w-100 sm:w-300">
     <div class="flex justify-between">
       <UserMenu username="noir" @signout="signOutAction" />
-      <AddAccountBtn @submit="x" :inputs="addAccountInputs" />
+      <AddAccountBtn :inputs="addAccountInputs" @submit="addAcctounAction" />
     </div>
     <div>
       <AccountCard :account="noir" />
